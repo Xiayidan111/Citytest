@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>哪座城市，会让你活得像自己</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23ECEAE2'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23B23A2E' stroke-width='2.5'/%3E%3Ccircle cx='16' cy='16' r='3' fill='%232C4866'/%3E%3C/svg%3E">
+<style>
+  :root{
+    --paper:#ECEAE2;
+    --paper-2:#E3E0D5;
+    --ink:#17201C;
+    --ink-soft:#4B5049;
+    --ink-mute:#7C7F75;
+    --red:#B23A2E;
+    --blue:#2C4866;
+    --line:rgba(23,32,28,.16);
+    --serif:"Source Han Serif SC","Noto Serif CJK SC","Songti SC","STSong","SimSun",serif;
+    --sans:"PingFang SC","Hiragino Sans GB","Source Han Sans SC","Noto Sans CJK SC","Microsoft YaHei",sans-serif;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--sans);
+    font-size:16px;
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+  }
+  /* 纸纹：极淡的横向经纬，像旧地图 */
+  body::before{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+    background-image:linear-gradient(rgba(44,72,102,.055) 1px,transparent 1px);
+    background-size:100% 28px;
+  }
+  .wrap{position:relative;z-index:1;max-width:760px;margin:0 auto;padding:0 20px 56px}
+
+  /* ===== 视图切换 ===== */
+  .view{display:none}
+  .view.on{display:block}
+
+  /* ===== 封面 ===== */
+  .cover{padding-top:56px}
+  .stamp{
+    display:inline-flex;flex-direction:column;align-items:center;justify-content:center;
+    width:96px;height:96px;border:2px solid var(--red);border-radius:50%;
+    color:var(--red);font-family:var(--serif);font-size:12px;line-height:1.35;
+    letter-spacing:.1em;transform:rotate(-7deg);opacity:.85;margin-bottom:34px;
+    box-shadow:inset 0 0 0 4px rgba(178,58,46,.12);
+  }
+  .stamp b{font-size:20px;letter-spacing:.03em;font-weight:400}
+  h1{
+    font-family:var(--serif);font-weight:400;
+    font-size:38px;line-height:1.28;letter-spacing:.01em;margin:0 0 8px;
+  }
+  h1 .br{display:block}
+  .lede{color:var(--ink-soft);font-size:15px;margin:0 0 32px;max-width:100%}
+  .rule{height:1px;background:var(--line);margin:0 0 20px}
+  .meta{display:flex;gap:18px;flex-wrap:wrap;font-size:13px;color:var(--ink-mute);letter-spacing:.02em;margin-bottom:40px}
+  .meta span{display:inline-flex;align-items:center;gap:7px}
+  .dot{width:4px;height:4px;background:var(--blue);border-radius:50%}
+
+  /* ===== 按钮 ===== */
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:10px;
+    min-height:52px;padding:0 26px;
+    border:1px solid var(--ink);background:var(--ink);color:var(--paper);
+    font-family:var(--sans);font-size:16px;letter-spacing:.04em;
+    cursor:pointer;transition:background .18s,color .18s,transform .18s;
+    border-radius:0;
+  }
+  .btn:hover{background:var(--blue);border-color:var(--blue)}
+  .btn:active{transform:translateY(1px)}
+  .btn.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+  .btn.ghost:hover{background:transparent;border-color:var(--ink);color:var(--ink)}
+  .btn:focus-visible{outline:2px solid var(--red);outline-offset:3px}
+  .btn svg{width:16px;height:16px}
+
+  /* ===== 测验 ===== */
+  .bar{display:flex;gap:3px;padding-top:34px;margin-bottom:6px}
+  .bar i{flex:1;height:3px;background:rgba(23,32,28,.12);transition:background .25s}
+  .bar i.done{background:var(--blue)}
+  .bar i.now{background:var(--red)}
+  .qhead{display:flex;justify-content:space-between;align-items:baseline;margin:14px 0 30px;font-size:13px;color:var(--ink-mute);letter-spacing:.06em}
+  .qnum{font-family:var(--serif);font-size:15px;color:var(--red)}
+  .qtext{
+    font-family:var(--serif);font-weight:400;
+    font-size:25px;line-height:1.5;margin:0 0 30px;letter-spacing:.01em;
+  }
+  .opts{display:flex;flex-direction:column;gap:10px}
+  .opt{
+    display:flex;align-items:flex-start;gap:14px;
+    width:100%;text-align:left;padding:16px 18px;
+    background:rgba(255,255,255,.5);border:1px solid var(--line);
+    color:var(--ink);font-family:var(--sans);font-size:15.5px;line-height:1.65;
+    cursor:pointer;transition:border-color .16s,background .16s,color .16s;
+    border-radius:0;min-height:56px;
+  }
+  .opt:hover{border-color:var(--ink);background:rgba(255,255,255,.85)}
+  .opt:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+  .opt .k{
+    flex:0 0 auto;font-family:var(--serif);font-size:13px;color:var(--ink-mute);
+    border:1px solid var(--line);width:23px;height:23px;display:flex;align-items:center;justify-content:center;
+    margin-top:3px;transition:.16s;
+  }
+  .opt.sel{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+  .opt.sel .k{color:var(--paper);border-color:rgba(236,234,226,.4)}
+  .qfoot{display:flex;justify-content:flex-start;margin-top:26px}
+  .back{
+    background:none;border:none;color:var(--ink-mute);font-size:13px;
+    cursor:pointer;padding:10px 0;font-family:var(--sans);letter-spacing:.04em;
+  }
+  .back:hover{color:var(--ink)}
+  .back:disabled{opacity:.3;cursor:default}
+
+  /* ===== 结果 ===== */
+  .res-top{padding-top:44px}
+  .eyebrow{font-size:12.5px;letter-spacing:.16em;color:var(--ink-mute);margin-bottom:14px}
+  .city-name{font-family:var(--serif);font-size:52px;line-height:1.1;margin:0 0 6px;letter-spacing:.04em}
+  .city-tag{font-family:var(--serif);font-size:17px;color:var(--red);margin:0 0 26px}
+  .score{display:flex;align-items:baseline;gap:10px;margin-bottom:30px}
+  .score b{font-family:var(--serif);font-size:34px;font-weight:400;color:var(--blue);line-height:1}
+  .score span{font-size:13px;color:var(--ink-mute);letter-spacing:.05em}
+  .quote{
+    border-left:2px solid var(--red);padding:2px 0 2px 18px;
+    color:var(--ink-soft);font-size:15.5px;line-height:1.85;margin:0 0 34px;
+  }
+  h2{
+    font-family:var(--serif);font-weight:400;font-size:19px;margin:34px 0 14px;
+    letter-spacing:.05em;
+  }
+  h2 em{font-style:normal;color:var(--red);font-size:12px;letter-spacing:.14em;margin-right:10px}
+  .para{font-size:15px;color:var(--ink-soft);margin:0 0 12px}
+  .list{list-style:none;padding:0;margin:0 0 8px}
+  .list li{position:relative;padding-left:18px;font-size:15px;color:var(--ink-soft);margin-bottom:9px;line-height:1.7}
+  .list li::before{content:"";position:absolute;left:0;top:.62em;width:6px;height:1px;background:var(--blue)}
+  .cost li::before{background:var(--red)}
+  .dims{margin:6px 0 0}
+  .dim{display:grid;grid-template-columns:92px 1fr 40px;align-items:center;gap:12px;margin-bottom:11px;font-size:13px;color:var(--ink-soft)}
+  .dim .track{height:6px;background:rgba(23,32,28,.1);position:relative}
+  .dim .fill{position:absolute;left:0;top:0;bottom:0;background:var(--blue);width:0;transition:width .8s cubic-bezier(.2,.7,.2,1)}
+  .dim .val{text-align:right;color:var(--ink-mute);font-size:12px}
+  .alt{border-top:1px solid var(--line);padding-top:6px;margin-top:10px}
+  .alt-row{display:flex;align-items:baseline;gap:14px;padding:14px 0;border-bottom:1px solid var(--line)}
+  .alt-row .n{font-family:var(--serif);font-size:20px;min-width:4em}
+  .alt-row .t{flex:1;font-size:13.5px;color:var(--ink-soft);line-height:1.6}
+  .alt-row .p{font-family:var(--serif);font-size:14px;color:var(--ink-mute)}
+  .actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:38px}
+  .note{font-size:12.5px;color:var(--ink-mute);margin-top:26px;line-height:1.7;max-width:100%}
+  .foot{font-size:12px;color:var(--ink-mute);letter-spacing:.06em;margin-top:40px}
+
+  @media (max-width:520px){
+    .wrap{padding:0 18px 48px}
+    h1{font-size:29px;line-height:1.35}
+    .qtext{font-size:21px}
+    .city-name{font-size:40px}
+    .stamp{width:84px;height:84px;font-size:11px}
+    .stamp b{font-size:17px}
+    .dim{grid-template-columns:78px 1fr 36px;font-size:12px}
+    .score b{font-size:28px}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *{transition:none!important;animation:none!important}
+    .dim .fill{transition:none}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ===== 视图：封面 ===== -->
+  <section class="view on" id="cover">
+    <div class="cover">
+      <div class="stamp"><span>城市</span><b>人格</b><span>测试</span></div>
+      <h1>哪座城市<span class="br"></span>会让你活得像自己</h1>
+      <p class="lede">不问你喜欢哪座城，只问你<b>怎么起床、怎么通勤、怎么社交、怎么害怕</b>。十六个生活细节，指向一座更贴合你身体节奏的城。</p>
+      <div class="rule"></div>
+      <div class="meta">
+        <span><i class="dot"></i>16 道题</span>
+        <span><i class="dot"></i>约 3 分钟</span>
+        <span><i class="dot"></i>14 座城市匹配</span>
+      </div>
+      <button class="btn" id="start">开始测试
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 12h15M13 6l6 6-6 6"/></svg>
+      </button>
+      <p class="note">结果依据你在六个维度上的偏好计算：<b>节奏、人气、山水、秩序、体感、关系</b>。城市画像为综合印象，仅供自我认识与参考，不做移居建议。</p>
+      <div class="foot">CITY × PERSONALITY ／ 2026</div>
+    </div>
+  </section>
+
+  <!-- ===== 视图：答题 ===== -->
+  <section class="view" id="quiz">
+    <div class="bar" id="bar"></div>
+    <div class="qhead"><span class="qnum" id="qnum">01</span><span id="qhint">选一个最像你的</span></div>
+    <p class="qtext" id="qtext"></p>
+    <div class="opts" id="opts"></div>
+    <div class="qfoot"><button class="back" id="back">← 上一题</button></div>
+  </section>
+
+  <!-- ===== 视图：结果 ===== -->
+  <section class="view" id="result">
+    <div class="res-top">
+      <div class="eyebrow" id="rEyebrow">你的适配城市</div>
+      <h1 class="city-name" id="rName">—</h1>
+      <p class="city-tag" id="rTag"></p>
+      <div class="score"><b id="rScore">—</b><span>适配度</span></div>
+      <p class="quote" id="rQuote"></p>
+    </div>
+
+    <h2><em>画像</em>你会在那里这样生活</h2>
+    <p class="para" id="rPortrait"></p>
+
+    <h2><em>契合</em>它接得住你这些</h2>
+    <ul class="list" id="rFit"></ul>
+
+    <h2><em>代价</em>你也要接受这些</h2>
+    <ul class="list cost" id="rCost"></ul>
+
+    <h2><em>坐标</em>你在六个维度上的位置</h2>
+    <div class="dims" id="rDims"></div>
+
+    <h2><em>备选</em>还有两座城，也像你</h2>
+    <div class="alt" id="rAlt"></div>
+
+    <div class="actions">
+      <button class="btn ghost" id="again">再测一次</button>
+    </div>
+    <p class="note">适配度按六维偏好与城市画像的接近程度换算，是倾向而非定论。人对城市的适应力，往往比测试结果更大。</p>
+    <div class="foot">CITY × PERSONALITY ／ 2026</div>
+  </section>
+
+</div>
+
+<script>
+(function(){
+  var DIMS = ['节奏','人气','山水','秩序','体感','关系'];
+
+  // [节奏, 人气, 山水, 秩序, 湿热, 关系]
+  var Q = [
+    {t:'早晨醒来，你希望窗外是——', o:[
+      {t:'高楼、车流，城市已经全速运转', v:[85,85,25,80,55,55]},
+      {t:'安静的巷子，楼下早餐摊刚支起来', v:[35,60,45,30,60,60]},
+      {t:'阳台外能看到山，或者一片水', v:[25,30,90,40,75,40]},
+      {t:'老城区的树影，安静但有人气', v:[45,55,55,40,60,55]}
+    ]},
+    {t:'每天通勤四十分钟，你——', o:[
+      {t:'完全忍不了，宁可住得贵也要离得近', v:[85,70,25,85,50,50]},
+      {t:'能接受，路上听听歌看看书就过去了', v:[55,50,45,55,55,50]},
+      {t:'无所谓，我更在意住的地方舒不舒服', v:[30,35,80,35,70,40]},
+      {t:'希望这段路本身就有风景可看', v:[40,30,85,45,65,45]}
+    ]},
+    {t:'一个完全空的周末，你最想去——', o:[
+      {t:'新开的展、商场、咖啡馆，逛到天黑', v:[80,80,30,80,55,60]},
+      {t:'菜市场、老街、巷子里的苍蝇馆子', v:[50,70,40,25,65,65]},
+      {t:'爬山、江边、公园里躺一下午', v:[25,25,90,35,75,40]},
+      {t:'就在家待着，谁也不见', v:[30,20,55,45,55,15]}
+    ]},
+    {t:'关于天气，你更接近——', o:[
+      {t:'怕潮怕闷，干爽的天最舒服', v:[60,50,45,60,15,50]},
+      {t:'喜欢四季分明，冬天就该有冬天的样子', v:[55,50,50,55,40,50]},
+      {t:'喜欢湿润，皮肤不干、空气有水分', v:[45,50,70,45,90,50]},
+      {t:'只要不冻手就行，别的都能忍', v:[50,50,60,45,70,50]}
+    ]},
+    {t:'你的社交状态更像——', o:[
+      {t:'三五好友，来往很深，不爱应酬', v:[40,35,50,45,55,25]},
+      {t:'喜欢热闹，认识新朋友毫不费力', v:[75,85,40,55,60,90]},
+      {t:'圈子固定，但要有共同爱好的人才聊得来', v:[50,55,55,50,60,55]},
+      {t:'工作场合可以，私人时间必须独处', v:[60,50,50,60,55,30]}
+    ]},
+    {t:'如果这座城市很贵，你会——', o:[
+      {t:'只要能留下来，贵也认', v:[85,80,30,80,55,50]},
+      {t:'性价比优先，宁可住远一点', v:[40,45,65,45,60,45]},
+      {t:'我想要压力小一点，生活能喘气', v:[25,30,80,35,70,40]},
+      {t:'贵可以，但要换到更好的机会', v:[90,75,30,75,60,45]}
+    ]},
+    {t:'一座城的「长相」，你更吃哪一套——', o:[
+      {t:'有年头的老建筑、旧街区、褪色的招牌', v:[45,55,45,50,60,50]},
+      {t:'整齐、现代、干净的天际线', v:[85,65,30,90,55,45]},
+      {t:'有山有水，城市长在自然里', v:[30,35,90,40,75,40]},
+      {t:'烟火气重，街头有声音、有味道', v:[55,85,40,25,70,75]}
+    ]},
+    {t:'走在路上，你最先注意到——', o:[
+      {t:'路面平不平、标识清不清楚', v:[70,50,35,90,50,40]},
+      {t:'有没有好吃的、好逛的', v:[50,75,40,30,65,70]},
+      {t:'树、天空、有没有水', v:[30,30,90,35,70,40]},
+      {t:'人多不多、挤不挤', v:[50,85,35,50,65,60]}
+    ]},
+    {t:'工作这件事，你更看重——', o:[
+      {t:'平台大、上升快，先跑起来', v:[90,75,30,80,55,55]},
+      {t:'稳定，能长年待下去', v:[35,50,55,60,60,45]},
+      {t:'自由，时间能自己安排', v:[30,30,70,30,65,40]},
+      {t:'有创造力，不做重复的事', v:[55,55,50,35,60,60]}
+    ]},
+    {t:'想象十年后的一个普通傍晚——', o:[
+      {t:'下班沿着江边走回家', v:[45,50,70,50,65,50]},
+      {t:'加班到深夜，楼下还有便利店亮着', v:[90,85,25,85,60,45]},
+      {t:'周末开车一小时就能进山', v:[35,35,90,40,70,40]},
+      {t:'在熟悉的街区，和熟人打招呼', v:[40,60,50,40,65,65]}
+    ]},
+    {t:'初到陌生城市，你判断「能不能住」的第一标准——', o:[
+      {t:'地铁方不方便', v:[80,70,30,85,55,45]},
+      {t:'空气和绿化', v:[30,35,90,40,70,40]},
+      {t:'东西好不好吃', v:[50,70,45,25,70,65]},
+      {t:'人友不友善、排不排外', v:[45,55,50,45,60,85]}
+    ]},
+    {t:'你更怕哪一种生活——', o:[
+      {t:'一辈子没什么变化，太安静了', v:[90,80,40,60,60,60]},
+      {t:'天天被推着跑，喘不上气', v:[20,30,75,35,70,35]},
+      {t:'城市太大，自己很渺小', v:[45,30,70,55,65,35]},
+      {t:'太规矩，没有意外发生', v:[55,60,55,20,65,65]}
+    ]},
+    {t:'住在哪儿，你最舒服——', o:[
+      {t:'城市中心，楼下什么都现成', v:[90,85,25,80,55,55]},
+      {t:'安静的老小区，走几步就是菜场', v:[40,55,50,40,60,65]},
+      {t:'城郊，窗外是山或者田', v:[30,25,90,35,70,40]},
+      {t:'新城，干净整齐、配套齐全', v:[70,50,35,85,55,50]}
+    ]},
+    {t:'关于声音，你——', o:[
+      {t:'一点吵都受不了，要安静', v:[35,25,55,60,55,35]},
+      {t:'能接受街上的声响，那是人气', v:[55,80,40,30,65,65]},
+      {t:'白天热闹无所谓，夜里得静', v:[60,70,40,55,60,60]},
+      {t:'越热闹越好，安静会让我慌', v:[85,90,35,45,60,80]}
+    ]},
+    {t:'一群人里，你通常是——', o:[
+      {t:'组织者，喜欢把人凑到一起', v:[80,85,40,60,55,90]},
+      {t:'熟人局里的倾听者', v:[40,45,55,50,60,40]},
+      {t:'边缘的观察者，爱看不太爱参与', v:[45,60,50,40,60,30]},
+      {t:'最好谁都不认识', v:[35,20,65,45,60,15]}
+    ]},
+    {t:'五年后，你更希望——', o:[
+      {t:'在自己的领域里有点名气', v:[90,75,30,80,55,60]},
+      {t:'有份稳定工作，生活有规律', v:[35,50,55,65,60,45]},
+      {t:'搬去更舒服的城市，钱少点也行', v:[25,30,85,35,70,40]},
+      {t:'和一群人做成了一件有影响的事', v:[75,80,45,55,60,85]}
+    ]}
+  ];
+
+  var CITIES = [
+    {n:'重庆', tag:'城市长在山上，人活在烟火里', v:[60,78,72,35,85,82],
+     p:'你会喜欢那种「一出门就是坡」的城。轻轨穿过楼，地图在这里经常失效，问路比导航管用。夜里两江的灯亮起来，江风里带着火锅底料的味道。人说话直，嗓门大，但热心，见你拎重物会伸手。',
+     fit:['喜欢立体的、有身体感的城市','爱深夜的街、爱热闹的人','吃得惯辣，也受得住潮'],
+     cost:['夏天潮热漫长，空调几乎全年待命','地形让通勤变成体力活','城市的「不讲道理」需要耐心消化']},
+
+    {n:'成都', tag:'把日子过慢一点，也不必解释', v:[35,65,60,40,78,72],
+     p:'在这里，一下午坐在茶馆发呆不算浪费。城市被摊得很平，公园多，河边多，谁都不催你。人客气、爱聊天，陌生人之间也能搭上话。你会发现自己说话的速度慢下来了。',
+     fit:['想要松弛、不爱被推着走','喜欢公园、茶馆、街边的座位','社交上需要温度但不压迫'],
+     cost:['机会密度不如沿海，专业上升要靠自己找','冬天湿冷，屋里比外面难熬','太舒服，容易原地踏步']},
+
+    {n:'杭州', tag:'城里有山，山里有城', v:[55,55,78,72,80,50],
+     p:'湖、山、湿地都被安排得体面，绿化不是点缀而是骨架。你可以在写字楼里卷到很晚，也能半小时后走进一条没什么人的山路。城市干净，审美在线，连便利店都摆得整齐。',
+     fit:['既要体面也要自然，两边都不肯放','在意城市的秩序与美感','能接受高强度的同时需要出口'],
+     cost:['房价与租金压力大','夏天闷热，梅雨绵长','很多「好生活」都是明码标价的']},
+
+    {n:'上海', tag:'一座把人训练得很好的城市', v:[92,88,30,92,72,40],
+     p:'规则清楚，效率优先，边界分明。你能在这里过一种极其可控的生活：几点出门、几点到家、哪家店几点关门，都算得准。人之间有礼貌的距离，不打听，也不热心。',
+     fit:['喜欢秩序、专业主义、清楚的分工','享受高密度资源与信息','独处也能过得很好'],
+     cost:['房价与竞争压力都高','人际关系偏功能性，孤独是常态','城市很大，需要很久才觉得「住下来了」']},
+
+    {n:'北京', tag:'大到可以装下很多种活法', v:[85,80,25,78,30,45],
+     p:'尺度大到荒诞，一条路走过去三个街区。但文化密度无人能及：展览、剧场、书店、老胡同。空气干，冬天有风，天空很高。人会跟你聊很大的话题。',
+     fit:['喜欢文化、历史、大格局','能忍受长通勤与干燥','想要一个「有分量」的城市'],
+     cost:['干燥、风大、冬天难熬','通勤距离常常以小时计','城市的疏离感来得比别处早']},
+
+    {n:'深圳', tag:'没有人问你从哪里来', v:[95,75,45,72,88,35],
+     p:'一座移民城市，规则简单：能干就行。绿化好到不像话，海就在边上，山也在城里。但整座城始终在跑，你很难找到一个人陪你慢下来。',
+     fit:['想快、想拼、想被能力评价','不在意出身与背景','喜欢海边与公园'],
+     cost:['文化根系浅，久了会觉得单薄','房价高，年轻人流动性大','节奏不容许你停，停下来会慌']},
+
+    {n:'广州', tag:'务实、好吃、不问来路', v:[65,82,50,45,92,60],
+     p:'早茶到宵夜，一天都在吃。城市不炫，甚至有点旧，但极其好用：东西便宜、看病方便、办事直接。人不装，也不爱讲场面话。',
+     fit:['喜欢烟火、务实、不搞虚的','对吃的要求高','能扛湿热的夏天'],
+     cost:['夏天漫长，回南天粘腻','城市面貌偏旧，不够「好看」','语言与圈子的隐性门槛存在']},
+
+    {n:'厦门', tag:'海风把节奏吹慢了', v:[30,40,85,55,85,45],
+     p:'岛、海、凤凰木，城市小，走完一圈不用很久。空气里有盐味，傍晚的风很稳。街上人不多，说话也轻声。',
+     fit:['喜欢海、喜欢小尺度','想要慢，且不需要太多机会','对气候湿润、空气好有刚需'],
+     cost:['产业与机会有限，职业天花板早','房价不低，岛内更贵','夏天台风频繁']},
+
+    {n:'西安', tag:'城墙上骑车，城墙下吃面', v:[55,70,35,55,25,70],
+     p:'历史不在博物馆，在你每天经过的街角。城墙一圈骑下来，能看到整个城的古今叠在一起。面食便宜又扎实，人说话直，热心但嗓门大。',
+     fit:['喜欢历史、喜欢有根的城市','爱吃面、能接受干燥','喜欢直来直去的人际'],
+     cost:['干燥，冬天有雾霾','产业结构偏传统，机会集中度不高','城市管理节奏偏慢']},
+
+    {n:'长沙', tag:'夜里十二点，城市才刚开始', v:[60,75,45,42,85,85],
+     p:'房价友好，夜生活凶悍，人热络得几乎没有边界。凌晨两点街上还是人，吃的东西便宜到不真实。你会很快交到朋友，也很难有真正的独处。',
+     fit:['爱热闹、爱夜、爱便宜的快乐','社交需求旺盛，不怕被打扰','对湿热有耐受力'],
+     cost:['夏天极热，体感难熬','优质岗位集中在少数行业','边界感弱，久了会累']},
+
+    {n:'青岛', tag:'有海，有风，有啤酒花的味道', v:[45,45,80,65,45,55],
+     p:'红瓦绿树，海在城的边上而不是城的中心。夏天不闷，风常年吹着，空气比多数北方城市干净。城市不慌，人也不急。',
+     fit:['喜欢海，又不想被潮湿困住','偏好清爽的北方体感','想要体面但不必拼命'],
+     cost:['冬天海风刺骨','经济节奏偏慢，机会不算多','旅游季与生活季的落差明显']},
+
+    {n:'昆明', tag:'四季都像春天，日子也像', v:[25,35,85,45,55,55],
+     p:'阳光、鲜花、慢。城市规模刚好，不吵也不空。一年到头衣服不用换季，天蓝得离谱。人会告诉你「慢慢来，不着急」。',
+     fit:['把气候放在第一位','想要慢，且不追求事业速度','喜欢自然、花、户外'],
+     cost:['机会少，专业发展空间有限','海拔偏高，紫外线强','城市活力偏淡，久了会闷']},
+
+    {n:'苏州', tag:'把规整过成一种美', v:[40,45,65,80,78,40],
+     p:'园林、运河、老街都收拾得干净，连菜场都整齐。生活半径小，节奏稳，去上海只要一小时。人不吵，日子过得很体面。',
+     fit:['喜欢精致、秩序、江南气','想要小尺度但不愿离开机会圈','偏爱安静、边界清楚的关系'],
+     cost:['房价高，园区更贵','夏天湿热，梅雨长','生活被「体面」框住，松弛感有限']},
+
+    {n:'武汉', tag:'江湖气，火气，和一碗过早的热干面', v:[65,78,55,45,88,75],
+     p:'两江三镇，城市被水切成几块，桥把它们连起来。人性格直，嗓门大，热情也直接。早餐是一天里最隆重的事。',
+     fit:['喜欢直爽、不做作的人际','能扛酷热','爱江、爱桥、爱市井'],
+     cost:['夏天极热，冬天湿冷','城市界面偏粗，不够细腻','通勤跨江耗时长']}
+  ];
+
+  var state = {i:0, ans:[]};
+  var $ = function(id){return document.getElementById(id);};
+
+  function show(id){
+    var vs = document.querySelectorAll('.view');
+    for(var k=0;k<vs.length;k++){vs[k].classList.remove('on');}
+    $(id).classList.add('on');
+    window.scrollTo(0,0);
+  }
+
+  function buildBar(){
+    var bar = $('bar'), html='';
+    for(var k=0;k<Q.length;k++){html += '<i></i>';}
+    bar.innerHTML = html;
+  }
+  function paintBar(){
+    var items = $('bar').children;
+    for(var k=0;k<items.length;k++){
+      items[k].className = '';
+      if(k < state.i) items[k].className = 'done';
+      if(k === state.i) items[k].className = 'now';
+    }
+  }
+
+  function renderQ(){
+    paintBar();
+    $('qnum').textContent = (state.i<9?'0':'') + (state.i+1);
+    $('qhint').textContent = state.i === Q.length-1 ? '最后一题了' : '选一个最像你的';
+    $('qtext').textContent = Q[state.i].t;
+    var opts = $('opts'), html='';
+    var keys = ['A','B','C','D'];
+    for(var k=0;k<Q[state.i].o.length;k++){
+      var sel = state.ans[state.i] === k ? ' sel' : '';
+      html += '<button class="opt'+sel+'" data-k="'+k+'"><span class="k">'+keys[k]+'</span><span>'+Q[state.i].o[k].t+'</span></button>';
+    }
+    opts.innerHTML = html;
+    var btns = opts.querySelectorAll('.opt');
+    for(var j=0;j<btns.length;j++){
+      btns[j].addEventListener('click', onPick);
+    }
+    $('back').disabled = state.i === 0;
+  }
+
+  function onPick(e){
+    var btn = e.currentTarget;
+    var k = parseInt(btn.getAttribute('data-k'),10);
+    state.ans[state.i] = k;
+    var sibs = btn.parentNode.querySelectorAll('.opt');
+    for(var j=0;j<sibs.length;j++){sibs[j].classList.remove('sel');}
+    btn.classList.add('sel');
+    setTimeout(function(){
+      if(state.i < Q.length-1){state.i++; renderQ();}
+      else{finish();}
+    }, 260);
+  }
+
+  function finish(){
+    var sum=[0,0,0,0,0,0], n=0;
+    for(var k=0;k<state.ans.length;k++){
+      if(state.ans[k]==null) continue;
+      var v = Q[k].o[state.ans[k]].v;
+      for(var d=0;d<6;d++){sum[d]+=v[d];}
+      n++;
+    }
+    var raw = sum.map(function(x){return x/Math.max(n,1);});
+    // 以 50 为中心拉开，让偏好更锋利
+    var u = raw.map(function(x){
+      var v = 50 + (x-50)*2.3;
+      return Math.max(8, Math.min(96, v));
+    });
+
+    var ranked = CITIES.map(function(c){
+      var dist=0;
+      for(var d=0;d<6;d++){dist += Math.abs(u[d]-c.v[d]);}
+      dist = dist/6;
+      return {c:c, d:dist, s:Math.round(96 - dist*0.85)};
+    }).sort(function(a,b){return a.d-b.d;});
+
+    var top = ranked[0];
+    var score = Math.max(60, Math.min(96, top.s));
+
+    $('rName').textContent = top.c.n;
+    $('rTag').textContent = top.c.tag;
+    $('rScore').textContent = score + '%';
+    $('rQuote').textContent = top.c.n + '不是最完美的选择，但它是你这些偏好叠起来之后，代价最小的那一个。';
+    $('rPortrait').textContent = top.c.p;
+
+    var fitHtml='', costHtml='';
+    for(var a=0;a<top.c.fit.length;a++){fitHtml += '<li>'+top.c.fit[a]+'</li>';}
+    for(var b=0;b<top.c.cost.length;b++){costHtml += '<li>'+top.c.cost[b]+'</li>';}
+    $('rFit').innerHTML = fitHtml;
+    $('rCost').innerHTML = costHtml;
+
+    var dimHtml='';
+    for(var d=0;d<6;d++){
+      dimHtml += '<div class="dim"><span>'+DIMS[d]+'</span>'
+        + '<span class="track"><span class="fill" style="width:0"></span></span>'
+        + '<span class="val">'+Math.round(u[d])+'</span></div>';
+    }
+    $('rDims').innerHTML = dimHtml;
+    var fills = $('rDims').querySelectorAll('.fill');
+    setTimeout(function(){
+      for(var d2=0;d2<6;d2++){fills[d2].style.width = Math.round(u[d2]) + '%';}
+    }, 120);
+
+    var altHtml='';
+    for(var e=1;e<=2;e++){
+      altHtml += '<div class="alt-row"><span class="n">'+ranked[e].c.n+'</span>'
+        + '<span class="t">'+ranked[e].c.tag+'</span>'
+        + '<span class="p">'+Math.max(55,Math.min(95,ranked[e].s))+'%</span></div>';
+    }
+    $('rAlt').innerHTML = altHtml;
+
+    show('result');
+  }
+
+  $('start').addEventListener('click', function(){
+    state.i = 0; state.ans = [];
+    buildBar(); renderQ(); show('quiz');
+  });
+  $('back').addEventListener('click', function(){
+    if(state.i > 0){state.i--; renderQ();}
+  });
+  $('again').addEventListener('click', function(){
+    state.i = 0; state.ans = [];
+    buildBar(); renderQ(); show('quiz');
+  });
+})();
+</script>
+</body>
+</html>
